@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>test adresse autocomplete</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css"
+          integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+
+    <link href="https://code.jquery.com/ui/1.10.4/themes/ui-lightness/jquery-ui.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+    <script src="https://code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+
+    <style>
+        .row {
+            padding-top: 50px;
+        }
+    </style>
+
+    <script>
+        $(function () {
+            $("#automplete").autocomplete({
+                minLength: 2,
+                delay: 500,
+                autoFocus: true,
+                source: function (request, response) {
+                    $.ajax({
+                        url: "http://localhost:8080/address",
+                        dataType: "json",
+                        data: {
+                            q: request.term
+                        },
+                        success: function (data) {
+                            response($.map(data, function (item) {
+                                return item
+                            }));
+                        }
+                    });
+                },
+                select: function (event, ui) {
+                    $("#name").val(ui.item.value);
+                    $("#value").val(ui.item.value);
+                    return false;
+                }
+            });
+        });
+    </script>
+
+</head>
+
+<body>
+<div class="row justify-content-center">
+    <div class="col-auto">
+        <div class="form-group">
+            <label for="automplete">Adresse: </label>
+            <input class="form-control" size="40" id="automplete">
+        </div>
+    </div>
+</div>
+</body>
+</html>
