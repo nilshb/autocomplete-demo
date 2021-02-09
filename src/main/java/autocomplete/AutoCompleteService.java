@@ -12,10 +12,12 @@ import org.elasticsearch.search.suggest.completion.CompletionSuggestionBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpServerErrorException;
 
+import javax.annotation.PostConstruct;
 import java.io.IOException;
 
 import static org.elasticsearch.search.suggest.completion.CompletionSuggestionBuilder.SUGGESTION_NAME;
@@ -30,17 +32,40 @@ public class AutoCompleteService {
 
     private final RestHighLevelClient client;
 
+    private Fuzziness fuzziness;
+
+    @Value("${fuzzy}")
+    private String fuzzy;
+
     @Autowired
     public AutoCompleteService(RestHighLevelClient client) {
         this.client = client;
     }
 
+    @PostConstruct
+    public void postConstruct() {
+        switch (fuzzy) {
+            case "1":
+                fuzziness = Fuzziness.ONE;
+                break;
+            case "2":
+                fuzziness = Fuzziness.TWO;
+            case "auto":
+                fuzziness = Fuzziness.AUTO;
+                break;
+            default:
+                fuzziness = Fuzziness.ZERO;
+        }
+        log.info("setting fuzziness to: " + fuzziness.asString());
+    }
+
     public Completions autocomplete(String prefixString, int size) {
+
         SearchRequest searchRequest = new SearchRequest(INDEX);
         CompletionSuggestionBuilder suggestBuilder = new CompletionSuggestionBuilder(FIELD_COMPLETION);
 
         suggestBuilder.size(size)
-                .prefix(prefixString, Fuzziness.ONE)
+                .prefix(prefixString, fuzziness)
                 .skipDuplicates(true)
                 .analyzer("standard");
 
